@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Pokémon Draft Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:linear-gradient(180deg,#0a0a1a 0%,#121230 50%,#0a0a1a 100%);min-height:100vh;color:#e0e0e0;padding-bottom:env(safe-area-inset-bottom);overflow-x:hidden}
+.container{max-width:100%;margin:0 auto}
+header{text-align:center;padding:16px 12px 12px;position:sticky;top:0;background:rgba(10,10,26,0.95);backdrop-filter:blur(20px);z-index:100;border-bottom:1px solid rgba(255,255,255,0.05)}
+header h1{font-size:1.35rem;font-weight:900;color:#ffcb05;display:flex;align-items:center;justify-content:center;gap:8px}
+header p{color:#64748b;font-size:0.75rem;margin-top:4px;font-weight:500}
+.mode-selector{display:flex;justify-content:center;gap:10px;padding:12px;position:sticky;top:60px;background:rgba(10,10,26,0.9);backdrop-filter:blur(20px);z-index:99;border-bottom:1px solid rgba(255,255,255,0.05)}
+.mode-btn{flex:1;max-width:160px;padding:12px 8px;border:2px solid rgba(59,130,246,0.3);background:rgba(59,130,246,0.08);color:#94a3b8;border-radius:12px;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation}
+.mode-btn:active{transform:scale(0.97)}
+.mode-btn.active{background:#3b82f6;border-color:#3b82f6;color:#fff;box-shadow:0 4px 20px rgba(59,130,246,0.3)}
+.team-section{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin:12px;padding:16px;overflow:hidden}
+.team-header{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:1.05rem;font-weight:800;margin-bottom:12px}
+.team-header .left{display:flex;align-items:center;gap:8px}
+.team-header .icon{font-size:1.2rem}
+.my-team .team-header{color:#60a5fa}
+.opp-team .team-header{color:#f87171}
+.quick-actions{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.quick-btn{padding:8px 14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:#94a3b8;border-radius:10px;cursor:pointer;font-size:0.75rem;font-weight:600;transition:all 0.15s;display:flex;align-items:center;gap:5px;touch-action:manipulation}
+.quick-btn:active{transform:scale(0.95)}
+.quick-btn.primary{background:rgba(59,130,246,0.15);border-color:rgba(59,130,246,0.4);color:#60a5fa}
+.quick-btn.success{background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#4ade80}
+.quick-btn.danger{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#f87171}
+.quick-btn.gold{background:rgba(255,203,5,0.15);border-color:rgba(255,203,5,0.4);color:#ffcb05}
+.pokemon-row{display:flex;gap:8px;margin-bottom:8px;align-items:center;animation:slideIn 0.3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.poke-name{flex:1;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:0.9rem;font-weight:600;outline:none;transition:all 0.2s;-webkit-appearance:none}
+.poke-name:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+.poke-name::placeholder{color:#475569}
+.type-select{padding:12px 8px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(0,0,0,0.35);color:#fff;font-size:0.8rem;font-weight:600;cursor:pointer;outline:none;min-width:80px;transition:all 0.2s;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px}
+.type-select:focus{border-color:#3b82f6}
+.type-select option{background:#0f0f23;color:#fff;font-weight:600}
+.remove-btn{background:rgba(239,68,68,0.1);border:none;color:#f87171;cursor:pointer;font-size:1.3rem;width:36px;height:36px;line-height:1;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;touch-action:manipulation;flex-shrink:0}
+.remove-btn:active{background:rgba(239,68,68,0.2);transform:scale(0.9)}
+.add-btn{width:100%;padding:14px;margin-top:4px;border:1.5px dashed rgba(255,255,255,0.15);background:transparent;color:#475569;border-radius:12px;cursor:pointer;font-size:0.85rem;font-weight:700;transition:all 0.2s;touch-action:manipulation}
+.add-btn:active{border-color:#ffcb05;color:#ffcb05;background:rgba(255,203,5,0.05)}
+.calculate-btn{width:calc(100% - 24px);margin:16px 12px;padding:18px;background:linear-gradient(135deg,#ffcb05 0%,#f59e0b 100%);border:none;border-radius:16px;color:#0a0a1a;font-size:1.1rem;font-weight:900;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all 0.2s;box-shadow:0 4px 20px rgba(255,203,5,0.2);touch-action:manipulation;position:sticky;bottom:12px;z-index:98}
+.calculate-btn:active{transform:scale(0.97);box-shadow:0 2px 10px rgba(255,203,5,0.3)}
+.results{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:16px;margin:0 12px 20px;padding:20px 16px;display:none}
+.results.show{display:block;animation:fadeUp 0.4s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.results h2{text-align:center;color:#ffcb05;margin-bottom:16px;font-size:1.3rem;font-weight:900}
+.result-item{display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:10px;background:rgba(0,0,0,0.3);border-radius:14px;border-left:4px solid;animation:slideIn 0.3s ease backwards}
+.result-item:nth-child(1){animation-delay:0.05s}
+.result-item:nth-child(2){animation-delay:0.1s}
+.result-item:nth-child(3){animation-delay:0.15s}
+.result-item:nth-child(4){animation-delay:0.2s}
+.result-rank{font-size:1.6rem;font-weight:900;width:40px;text-align:center;flex-shrink:0}
+.result-info{flex:1;min-width:0}
+.result-name{font-size:1rem;font-weight:800;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.result-types{margin-bottom:2px}
+.type-badge{display:inline-block;padding:3px 8px;border-radius:6px;font-size:0.65rem;font-weight:800;margin-right:4px;text-transform:uppercase;letter-spacing:0.5px}
+.result-score{font-size:1.8rem;font-weight:900;color:#ffcb05;flex-shrink:0;min-width:50px;text-align:right}
+.result-detail{font-size:0.7rem;color:#475569;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.matchup-grid{margin-top:20px;overflow-x:auto;border-radius:12px;border:1px solid rgba(255,255,255,0.06);-webkit-overflow-scrolling:touch}
+.matchup-table{width:100%;border-collapse:collapse;font-size:0.75rem;min-width:400px}
+.matchup-table th,.matchup-table td{padding:8px 6px;text-align:center;border:1px solid rgba(255,255,255,0.04);white-space:nowrap}
+.matchup-table th{background:rgba(0,0,0,0.4);color:#ffcb05;font-weight:800;font-size:0.7rem;position:sticky;top:0}
+.matchup-table td{color:#cbd5e1}
+.score-positive{color:#4ade80;font-weight:800}
+.score-negative{color:#f87171;font-weight:800}
+.score-neutral{color:#64748b}
+.legend{margin-top:16px;padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;font-size:0.75rem;color:#475569;line-height:1.6;border:1px solid rgba(255,255,255,0.06)}
+.legend strong{color:#94a3b8}
+.saved-drawer{display:none;background:rgba(0,0,0,0.4);border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.08)}
+.saved-drawer.show{display:block;animation:fadeUp 0.2s ease}
+.saved-team-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all 0.15s;touch-action:manipulation}
+.saved-team-item:active{background:rgba(59,130,246,0.15)}
+.saved-team-item .team-preview{display:flex;gap:4px;align-items:center}
+.saved-team-item .mini-badge{width:20px;height:20px;border-radius:4px;display:inline-block}
+.saved-team-item .team-name{font-size:0.85rem;font-weight:700;color:#e2e8f0}
+.saved-team-item .team-date{font-size:0.65rem;color:#475569}
+.saved-team-item .delete-saved{background:none;border:none;color:#f87171;font-size:1.1rem;padding:4px 8px;cursor:pointer;touch-action:manipulation}
+.upload-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(15px);z-index:1000;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+.upload-overlay.show{display:flex}
+.upload-box{width:100%;max-width:340px;background:#121230;border:2px dashed rgba(59,130,246,0.5);border-radius:20px;padding:36px 24px;text-align:center;cursor:pointer;transition:all 0.2s;touch-action:manipulation}
+.upload-box:active{border-color:#3b82f6;background:rgba(59,130,246,0.1);transform:scale(0.98)}
+.upload-box .icon{font-size:2.8rem;margin-bottom:12px}
+.upload-box h3{color:#e2e8f0;font-size:1.05rem;margin-bottom:8px}
+.upload-box p{color:#64748b;font-size:0.78rem;line-height:1.5}
+.upload-box input{display:none}
+.close-overlay{margin-top:16px;padding:12px 32px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#fff;font-size:0.9rem;font-weight:700;cursor:pointer;touch-action:manipulation}
+.close-overlay:active{background:rgba(255,255,255,0.2)}
+.spinner{display:none;width:36px;height:36px;border:3px solid rgba(59,130,246,0.2);border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:16px auto}
+.spinner.show{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(100px);background:#1e293b;color:#fff;padding:12px 24px;border-radius:12px;font-size:0.85rem;font-weight:600;z-index:1001;opacity:0;transition:all 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.1);white-space:nowrap;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.detected-preview{margin-top:16px;padding:14px;background:rgba(0,0,0,0.4);border-radius:12px;width:100%;max-width:340px;display:none}
+.detected-preview.show{display:block;animation:fadeUp 0.3s ease}
+.detected-preview h4{color:#ffcb05;font-size:0.85rem;margin-bottom:10px;text-align:center}
+.detected-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.8rem}
+.detected-row:last-child{border-bottom:none}
+.detected-row .slot-num{color:#64748b;width:20px;font-weight:700}
+.detected-row .detected-types{flex:1}
+.confirm-detect{width:100%;margin-top:12px;padding:12px;background:#22c55e;border:none;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:800;cursor:pointer;touch-action:manipulation}
+.confirm-detect:active{transform:scale(0.97)}
+</style>
+</head>
+<body>
+<div class="container">
+<header><h1>⚔️ Pokémon Draft</h1><p>Quick team builder for Champions</p></header>
+<div class="mode-selector">
+<button class="mode-btn active" onclick="setMode('singles')" id="btn-singles">🏆 Singles (3)</button>
+<button class="mode-btn" onclick="setMode('doubles')" id="btn-doubles">👥 Doubles (4)</button>
+</div>
+<div class="team-section my-team">
+<div class="team-header"><div class="left"><span class="icon">🛡️</span> Your Team</div></div>
+<div class="quick-actions">
+<button class="quick-btn primary" onclick="toggleSaved()">📁 Saved</button>
+<button class="quick-btn success" onclick="saveCurrentTeam()">💾 Save</button>
+<button class="quick-btn danger" onclick="clearTeam('my')">🗑️</button>
+</div>
+<div class="saved-drawer" id="saved-drawer">
+<div style="font-size:0.75rem;color:#64748b;margin-bottom:10px;font-weight:600">Tap to load, × to delete</div>
+<div id="saved-teams-list"></div>
+</div>
+<div id="my-team"></div>
+<button class="add-btn" onclick="addPokemon('my')">+ Add Pokémon</button>
+</div>
+<div class="team-section opp-team">
+<div class="team-header"><div class="left"><span class="icon">⚔️</span> Opponent</div></div>
+<div class="quick-actions">
+<button class="quick-btn gold" onclick="loadFromImage()">📸 From Screenshot</button>
+<button class="quick-btn danger" onclick="clearTeam('opp')">🗑️ Clear</button>
+</div>
+<div id="opp-team"></div>
+<button class="add-btn" onclick="addPokemon('opp')">+ Add Pokémon</button>
+</div>
+<button class="calculate-btn" onclick="calculate()">🎯 CALCULATE BEST TEAM</button>
+<div class="results" id="results">
+<h2>🏆 Recommended Team</h2>
+<div id="top-picks"></div>
+<div class="matchup-grid"><table class="matchup-table" id="matchup-table"></table></div>
+<div class="legend"><strong>Scoring:</strong> +1 super-effective, −1 not very effective/no effect. Sum across all opponent Pokémon.</div>
+</div>
+</div>
+<div class="upload-overlay" id="upload-overlay">
+<div class="upload-box" onclick="document.getElementById('file-input').click()">
+<div class="icon">📸</div>
+<h3>Paste Screenshot</h3>
+<p>Tap here, or paste directly (Ctrl+V / long-press)<br>Scans <strong>upper-right icons</strong> only</p>
+<input type="file" id="file-input" accept="image/*" onchange="handleImageUpload(event)">
+</div>
+<div class="spinner" id="upload-spinner"></div>
+<div class="detected-preview" id="detected-preview">
+<h4>Detected Types</h4>
+<div id="detected-list"></div>
+<button class="confirm-detect" onclick="applyDetected()">✅ Apply to Opponent</button>
+</div>
+<button class="close-overlay" onclick="closeUpload()">Cancel</button>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+
+const TYPE_CHART = {
+  normal:{rock:0.5,ghost:0,steel:0.5},
+  fire:{fire:0.5,water:0.5,grass:2,ice:2,bug:2,rock:0.5,dragon:0.5,steel:2},
+  water:{fire:2,water:0.5,grass:0.5,ground:2,rock:2,dragon:0.5},
+  grass:{fire:0.5,water:2,grass:0.5,poison:0.5,ground:2,flying:0.5,bug:0.5,rock:2,dragon:0.5,steel:0.5},
+  electric:{water:2,grass:0.5,electric:0.5,ground:0,flying:2,dragon:0.5},
+  ice:{fire:0.5,water:0.5,grass:2,ice:0.5,ground:2,flying:2,dragon:2,steel:0.5},
+  fighting:{normal:2,ice:2,poison:0.5,flying:0.5,psychic:0.5,bug:0.5,rock:2,ghost:0,dark:2,steel:2,fairy:0.5},
+  poison:{grass:2,poison:0.5,ground:0.5,rock:0.5,ghost:0.5,steel:0,fairy:2},
+  ground:{fire:2,grass:0.5,electric:2,poison:2,flying:0,bug:0.5,rock:2,steel:2},
+  flying:{grass:2,electric:0.5,fighting:2,bug:2,rock:0.5,steel:0.5},
+  psychic:{fighting:2,poison:2,psychic:0.5,dark:0,steel:0.5},
+  bug:{fire:0.5,grass:2,fighting:0.5,poison:0.5,flying:0.5,psychic:2,ghost:0.5,dark:2,steel:0.5,fairy:0.5},
+  rock:{fire:2,ice:2,fighting:0.5,ground:0.5,flying:2,bug:2,steel:0.5},
+  ghost:{normal:0,psychic:2,ghost:2,dark:0.5},
+  dragon:{dragon:2,steel:0.5,fairy:0},
+  dark:{fighting:0.5,psychic:2,ghost:2,dark:0.5,fairy:0.5},
+  steel:{fire:0.5,water:0.5,grass:0.5,ice:2,rock:2,steel:0.5,fairy:2},
+  fairy:{fire:0.5,fighting:2,poison:0.5,dragon:2,dark:2,steel:0.5}
+};
+
+const ALL_TYPES = Object.keys(TYPE_CHART);
+
+const TYPE_COLORS = {
+  normal:"#A8A77A", fire:"#EE8130", water:"#6390F0", grass:"#7AC74C", electric:"#F7D02C",
+  ice:"#96D9D6", fighting:"#C22E28", poison:"#A33EA1", ground:"#E2BF65", flying:"#A98FF3",
+  psychic:"#F95587", bug:"#A6B91A", rock:"#B6A136", ghost:"#735797", dragon:"#6F35FC",
+  dark:"#705746", steel:"#B7B7CE", fairy:"#D685AD"
+};
+
+const TYPE_RGB = {
+  normal:[168,167,122], fire:[238,129,48], water:[99,144,240], grass:[122,199,76], electric:[247,208,44],
+  ice:[150,217,214], fighting:[194,46,40], poison:[163,62,161], ground:[226,191,101], flying:[169,143,243],
+  psychic:[249,85,135], bug:[166,185,26], rock:[182,161,54], ghost:[115,87,151], dragon:[111,53,252],
+  dark:[112,87,70], steel:[183,183,206], fairy:[214,133,173]
+};
+
+const POKEMON_TYPES = {
+  swampert:["water","ground"], blaziken:["fire","fighting"], sceptile:["grass"],
+  infernape:["fire","fighting"], empoleon:["water","steel"], torterra:["grass","ground"],
+  emboar:["fire","fighting"], samurott:["water"], serperior:["grass"],
+  charizard:["fire","flying"], blastoise:["water"], venusaur:["grass","poison"],
+  typhlosion:["fire"], feraligatr:["water"], meganium:["grass"],
+  dragonite:["dragon","flying"], tyranitar:["rock","dark"], salamence:["dragon","flying"],
+  metagross:["steel","psychic"], garchomp:["dragon","ground"], hydreigon:["dark","dragon"],
+  goodra:["dragon"], dragapult:["dragon","ghost"], baxcalibur:["dragon","ice"],
+  gyarados:["water","flying"], gengar:["ghost","poison"], lucario:["fighting","steel"],
+  aegislash:["steel","ghost"], mimikyu:["ghost","fairy"], toxapex:["water","poison"],
+  corviknight:["flying","steel"], rillaboom:["grass"], cinderace:["fire"], inteleon:["water"],
+  urshifu:["fighting","dark"], zeraora:["electric"],
+  "tapu koko":["electric","fairy"], "tapu lele":["psychic","fairy"],
+  "tapu fini":["water","fairy"], "tapu bulu":["grass","fairy"],
+  "mega gengar":["ghost","poison"], "galarian slowbro":["poison","psychic"],
+  sylveon:["fairy"], slowbro:["water","psychic"], milotic:["water"],
+  grimmsnarl:["dark","fairy"], hawlucha:["fighting","flying"],
+  kingambit:["dark","steel"], basculegion:["water","ghost"],
+  volcarona:["bug","fire"], hatterene:["psychic","fairy"],
+  talonflame:["fire","flying"], gliscor:["ground","flying"], weavile:["dark","ice"],
+  excadrill:["ground","steel"], rotom:["electric","ghost"], heatran:["fire","steel"],
+  landorus:["ground","flying"], thundurus:["electric","flying"], tornadus:["flying"],
+  clefable:["fairy"], togekiss:["fairy","flying"], magnezone:["electric","steel"],
+  scizor:["bug","steel"], heracross:["bug","fighting"], breloom:["grass","fighting"],
+  conkeldurr:["fighting"], reuniclus:["psychic"], amoonguss:["grass","poison"],
+  ferrothorn:["grass","steel"], jellicent:["water","ghost"], alomomola:["water"],
+  mandibuzz:["dark","flying"], tentacruel:["water","poison"], starmie:["water","psychic"],
+  cloyster:["water","ice"], lapras:["water","ice"], snorlax:["normal"],
+  chansey:["normal"], blissey:["normal"], skarmory:["steel","flying"],
+  gligar:["ground","flying"], mamoswine:["ice","ground"], gastrodon:["water","ground"],
+  quagsire:["water","ground"], politoed:["water"], pelipper:["water","flying"],
+  kingdra:["water","dragon"], ludicolo:["water","grass"], kabutops:["rock","water"],
+  omastar:["rock","water"], carracosta:["water","rock"], barbaracle:["rock","water"],
+  crustle:["bug","rock"], forretress:["bug","steel"], celesteela:["steel","flying"],
+  kartana:["grass","steel"], pheromosa:["bug","fighting"], buzzwole:["bug","fighting"],
+  xurkitree:["electric"], nihilego:["rock","poison"], guzzlord:["dark","dragon"],
+  necrozma:["psychic"], solgaleo:["psychic","steel"], lunala:["psychic","ghost"],
+  zacian:["fairy"], zamazenta:["fighting"], eternatus:["poison","dragon"],
+  calyrex:["psychic","grass"], spectrier:["ghost"], glastrier:["ice"],
+  regieleki:["electric"], regidrago:["dragon"], "urshifu rapid":["fighting","water"],
+  zarude:["dark","grass"], incineroar:["fire","dark"], primarina:["water","fairy"],
+  decidueye:["grass","ghost"], greninja:["water","dark"], chesnaught:["grass","fighting"],
+  delphox:["fire","psychic"], froslass:["ice","ghost"], "porygon-z":["normal"],
+  gallade:["psychic","fighting"], moltres:["fire","flying"], zapdos:["electric","flying"],
+  articuno:["ice","flying"], suicune:["water"], raikou:["electric"], entei:["fire"],
+  latias:["dragon","psychic"], latios:["dragon","psychic"], kyogre:["water"],
+  groudon:["ground"], rayquaza:["dragon","flying"], deoxys:["psychic"],
+  dialga:["steel","dragon"], palkia:["water","dragon"], giratina:["ghost","dragon"],
+  cresselia:["psychic"], darkrai:["dark"], manaphy:["water"], shaymin:["grass"],
+  arceus:["normal"], victini:["psychic","fire"], zekrom:["dragon","electric"],
+  reshiram:["dragon","fire"], kyurem:["dragon","ice"], keldeo:["water","fighting"],
+  meloetta:["normal","psychic"], genesect:["bug","steel"], xerneas:["fairy"],
+  yveltal:["dark","flying"], zygarde:["dragon","ground"], diancie:["rock","fairy"],
+  hoopa:["psychic","ghost"], volcanion:["fire","water"], magearna:["steel","fairy"],
+  marshadow:["fighting","ghost"], melmetal:["steel"], orbeetle:["bug","psychic"],
+  drednaw:["water","rock"], coalossal:["rock","fire"], flapple:["grass","dragon"],
+  appletun:["grass","dragon"], sandaconda:["ground"], toxtricity:["electric","poison"],
+  centiskorch:["fire","bug"], grapploct:["fighting"], polteageist:["ghost"],
+  obstagoon:["dark","normal"], perrserker:["steel"], cursola:["ghost"],
+  sirfetchd:["fighting"], "mr rime":["ice","psychic"], runerigus:["ground","ghost"],
+  alcremie:["fairy"], falinks:["fighting"], pincurchin:["electric"],
+  frosmoth:["ice","bug"], stonjourner:["rock"], eiscue:["ice"],
+  indeedee:["psychic","normal"], morpeko:["electric","dark"], copperajah:["steel"],
+  dracozolt:["electric","dragon"], arctozolt:["electric","ice"],
+  dracovish:["water","dragon"], arctovish:["water","ice"], duraludon:["steel","dragon"],
+  wyrdeer:["normal","psychic"], kleavor:["bug","rock"], ursaluna:["ground","normal"],
+  sneasler:["fighting","poison"], overqwil:["dark","poison"], enamorus:["fairy","flying"],
+  meowscarada:["grass","dark"], skeledirge:["fire","ghost"], quaquaval:["water"],
+  oinkologne:["normal"], spidops:["bug"], lokix:["bug","dark"],
+  pawmot:["electric","fighting"], houndstone:["ghost"], ceruledge:["fire","ghost"],
+  armarouge:["fire","psychic"], bellibolt:["electric"], kilowattrel:["electric","flying"],
+  mabosstiff:["dark"], grafaiai:["poison","normal"], brambleghast:["grass","ghost"],
+  toedscruel:["ground","grass"], klawf:["rock"], scovillain:["grass","fire"],
+  revavroom:["steel","poison"], cyclizar:["dragon","normal"], orthworm:["steel"],
+  glimmora:["rock","poison"], dondozo:["water"], tatsugiri:["dragon","water"],
+  annihilape:["fighting","ghost"], clodsire:["poison","ground"],
+  farigiraf:["normal","psychic"], dudunsparce:["normal"],
+  "great tusk":["ground","fighting"], "scream tail":["fairy","psychic"],
+  "brute bonnet":["grass","dark"], "flutter mane":["ghost","fairy"],
+  "slither wing":["bug","fighting"], "sandy shocks":["electric","ground"],
+  "iron treads":["ground","steel"], "iron bundle":["ice","water"],
+  "iron hands":["fighting","electric"], "iron jugulis":["dark","flying"],
+  "iron moth":["fire","poison"], "iron thorns":["rock","electric"],
+  frigibax:["dragon","ice"], gholdengo:["steel","ghost"], "wo-chien":["dark","grass"],
+  "chien-pao":["dark","ice"], "ting-lu":["dark","ground"], "chi-yu":["dark","fire"],
+  "roaring moon":["dragon","dark"], "iron valiant":["fairy","fighting"],
+  "walking wake":["water","dragon"], "iron leaves":["grass","psychic"],
+  dipplin:["grass","dragon"], poltchageist:["grass","ghost"], sinistcha:["grass","ghost"],
+  okidogi:["poison","fighting"], munkidori:["poison","psychic"],
+  fezandipiti:["poison","fairy"], ogerpon:["grass"], archaludon:["steel","dragon"],
+  hydrapple:["grass","dragon"], "gouging fire":["fire","dragon"],
+  "raging bolt":["electric","dragon"], "iron boulder":["rock","psychic"],
+  "iron crown":["steel","psychic"], terapagos:["normal"], pecharunt:["poison","ghost"]
+};
+
+let mode = "singles";
+let myTeam = [];
+let oppTeam = [];
+let detectedResults = [];
+const STORAGE_KEY = "pokemon_draft_saved_teams";
+
+function init() {
+  for (let i = 0; i < 6; i++) {
+    myTeam.push({ name: "", type1: "", type2: "" });
+    oppTeam.push({ name: "", type1: "", type2: "" });
+  }
+  renderTeam("my");
+  renderTeam("opp");
+  loadLastTeam();
+  renderSavedTeams();
+  document.addEventListener("paste", handlePaste);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("btn-" + m).classList.add("active");
+}
+
+function createTypeSelect(selected) {
+  selected = selected || "";
+  let html = '<option value="">Type</option>';
+  ALL_TYPES.forEach(t => {
+    html += '<option value="' + t + '"' + (t === selected ? " selected" : "") + '>' + t.charAt(0).toUpperCase() + t.slice(1) + '</option>';
+  });
+  return html;
+}
+
+function renderTeam(teamId) {
+  const container = document.getElementById(teamId + "-team");
+  const team = teamId === "my" ? myTeam : oppTeam;
+  container.innerHTML = "";
+  team.forEach((poke, idx) => {
+    const row = document.createElement("div");
+    row.className = "pokemon-row";
+    row.innerHTML = 
+      '<input type="text" class="poke-name" placeholder="Name" value="' + escapeHtml(poke.name) + '" onchange="updateName(\'' + teamId + '\',' + idx + ',this.value)" onblur="autoFillTypes(\'' + teamId + '\',' + idx + ')">' +
+      '<select class="type-select" onchange="updateType1(\'' + teamId + '\',' + idx + ',this.value)">' + createTypeSelect(poke.type1) + '</select>' +
+      '<select class="type-select" onchange="updateType2(\'' + teamId + '\',' + idx + ',this.value)">' + createTypeSelect(poke.type2) + '</select>' +
+      '<button class="remove-btn" onclick="removePokemon(\'' + teamId + '\',' + idx + ')">&times;</button>';
+    container.appendChild(row);
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function addPokemon(teamId) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  if (team.length >= 6) return;
+  team.push({ name: "", type1: "", type2: "" });
+  renderTeam(teamId);
+}
+
+function removePokemon(teamId, idx) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  team.splice(idx, 1);
+  renderTeam(teamId);
+}
+
+function updateName(teamId, idx, val) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  team[idx].name = val;
+}
+
+function updateType1(teamId, idx, val) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  team[idx].type1 = val;
+}
+
+function updateType2(teamId, idx, val) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  team[idx].type2 = val;
+}
+
+function clearTeam(teamId) {
+  if (teamId === "my") myTeam = [];
+  else oppTeam = [];
+  for (let i = 0; i < 6; i++) {
+    (teamId === "my" ? myTeam : oppTeam).push({ name: "", type1: "", type2: "" });
+  }
+  renderTeam(teamId);
+  showToast(teamId === "my" ? "Your team cleared" : "Opponent cleared");
+}
+
+function autoFillTypes(teamId, idx) {
+  const team = teamId === "my" ? myTeam : oppTeam;
+  const poke = team[idx];
+  if (!poke.name || (poke.type1 && poke.type2)) return;
+
+  const lookup = poke.name.toLowerCase().trim();
+  const cleanName = lookup.replace(/\bmega\b/g, "").replace(/\bgalarian\b/g, "").replace(/\bgalar\b/g, "").replace(/\balolan\b/g, "").replace(/\bhisuian\b/g, "").trim();
+
+  let types = POKEMON_TYPES[lookup] || POKEMON_TYPES[cleanName] || null;
+
+  if (!types) {
+    for (const [name, t] of Object.entries(POKEMON_TYPES)) {
+      if (lookup.includes(name) || name.includes(lookup) || cleanName.includes(name)) {
+        types = t;
+        break;
+      }
+    }
+  }
+
+  if (types) {
+    poke.type1 = types[0] || "";
+    poke.type2 = types[1] || "";
+    renderTeam(teamId);
+    if (poke.type1) showToast("Auto-filled: " + types.map(t => t.charAt(0).toUpperCase() + t.slice(1)).join("/"));
+  }
+}
+
+function getSavedTeams() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
+}
+
+function saveCurrentTeam() {
+  const valid = myTeam.filter(p => p.name && p.type1);
+  if (valid.length === 0) { showToast("No valid Pokemon to save!"); return; }
+
+  const teams = getSavedTeams();
+  const teamName = valid.map(p => p.name).join(", ");
+  const entry = {
+    id: Date.now(),
+    name: teamName.length > 30 ? teamName.substring(0, 30) + "..." : teamName,
+    team: JSON.parse(JSON.stringify(myTeam)),
+    date: new Date().toLocaleDateString()
+  };
+  teams.unshift(entry);
+  if (teams.length > 10) teams.pop();
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(teams));
+  renderSavedTeams();
+  showToast("Team saved!");
+}
+
+function loadSavedTeam(id) {
+  const teams = getSavedTeams();
+  const found = teams.find(t => t.id === id);
+  if (found) {
+    myTeam = JSON.parse(JSON.stringify(found.team));
+    while (myTeam.length < 6) myTeam.push({ name: "", type1: "", type2: "" });
+    renderTeam("my");
+    toggleSaved();
+    showToast("Team loaded!");
+  }
+}
+
+function deleteSavedTeam(id, event) {
+  event.stopPropagation();
+  let teams = getSavedTeams().filter(t => t.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(teams));
+  renderSavedTeams();
+  showToast("Deleted");
+}
+
+function renderSavedTeams() {
+  const container = document.getElementById("saved-teams-list");
+  const teams = getSavedTeams();
+
+  if (teams.length === 0) {
+    container.innerHTML = '<div style="text-align:center;color:#475569;padding:16px;font-size:0.8rem;">No saved teams yet</div>';
+    return;
+  }
+
+  container.innerHTML = teams.map(t => {
+    const valid = t.team.filter(p => p.type1);
+    const badges = valid.slice(0, 6).map(p => '<span class="mini-badge" style="background:' + (TYPE_COLORS[p.type1] || "#666") + '"></span>').join("");
+    return '<div class="saved-team-item" onclick="loadSavedTeam(' + t.id + ')">' +
+      '<div><div class="team-name">' + escapeHtml(t.name) + '</div><div class="team-date">' + t.date + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:8px;"><div class="team-preview">' + badges + '</div>' +
+      '<button class="delete-saved" onclick="deleteSavedTeam(' + t.id + ',event)">&times;</button></div></div>';
+  }).join("");
+}
+
+function toggleSaved() {
+  document.getElementById("saved-drawer").classList.toggle("show");
+}
+
+function loadLastTeam() {
+  const teams = getSavedTeams();
+  if (teams.length > 0) {
+    myTeam = JSON.parse(JSON.stringify(teams[0].team));
+    while (myTeam.length < 6) myTeam.push({ name: "", type1: "", type2: "" });
+    renderTeam("my");
+  }
+}
+
+function loadFromImage() {
+  detectedResults = [];
+  document.getElementById("detected-preview").classList.remove("show");
+  document.getElementById("upload-overlay").classList.add("show");
+}
+
+function closeUpload() {
+  document.getElementById("upload-overlay").classList.remove("show");
+  document.getElementById("upload-spinner").classList.remove("show");
+  document.getElementById("detected-preview").classList.remove("show");
+  detectedResults = [];
+}
+
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (file) processImage(file);
+}
+
+function handlePaste(event) {
+  if (!document.getElementById("upload-overlay").classList.contains("show")) return;
+  const items = event.clipboardData && event.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      if (file) processImage(file);
+      break;
+    }
+  }
+}
+
+function processImage(file) {
+  document.getElementById("upload-spinner").classList.add("show");
+  document.getElementById("detected-preview").classList.remove("show");
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() { detectTypesFromImage(img); };
+    img.onerror = function() {
+      document.getElementById("upload-spinner").classList.remove("show");
+      showToast("Error loading image");
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function detectTypesFromImage(img) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const maxDim = 900;
+  let w = img.width, h = img.height;
+  if (w > maxDim || h > maxDim) {
+    const scale = maxDim / Math.max(w, h);
+    w = Math.floor(w * scale);
+    h = Math.floor(h * scale);
+  }
+  canvas.width = w;
+  canvas.height = h;
+  ctx.drawImage(img, 0, 0, w, h);
+
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+
+  const slotHeight = h / 6;
+  const detectedSlots = [];
+
+  for (let slot = 0; slot < 6; slot++) {
+    const slotTop = Math.floor(slot * slotHeight);
+    const slotTypes = [];
+
+    // Two icon positions per slot: first and second type icon
+    const iconConfigs = [
+      { x1: 0.78, x2: 0.86, y1: 0.05, y2: 0.22 },
+      { x1: 0.86, x2: 0.94, y1: 0.05, y2: 0.22 }
+    ];
+
+    for (const cfg of iconConfigs) {
+      const ix1 = Math.floor(w * cfg.x1);
+      const ix2 = Math.floor(w * cfg.x2);
+      const iy1 = slotTop + Math.floor(slotHeight * cfg.y1);
+      const iy2 = slotTop + Math.floor(slotHeight * cfg.y2);
+
+      if (ix2 > w || iy2 > h) continue;
+
+      let rSum = 0, gSum = 0, bSum = 0, count = 0;
+
+      for (let y = iy1; y < iy2; y += 2) {
+        for (let x = ix1; x < ix2; x += 2) {
+          const idx = (y * w + x) * 4;
+          const r = data[idx], g = data[idx + 1], b = data[idx + 2];
+          const brightness = (r + g + b) / 3;
+          const maxC = Math.max(r, g, b);
+          const minC = Math.min(r, g, b);
+          const sat = maxC > 0 ? (maxC - minC) / maxC : 0;
+
+          // Icon backgrounds: bright enough, saturated, not white symbol
+          if (brightness > 60 && brightness < 240 && sat > 0.25 && maxC < 250) {
+            // Exclude opponent box background (dark magenta/red family)
+            const isBoxBg = (r > g + 15) && (r > b + 5) && (brightness > 50 && brightness < 180);
+            if (!isBoxBg) {
+              rSum += r; gSum += g; bSum += b; count++;
+            }
+          }
+        }
+      }
+
+      if (count > 3) {
+        const avgR = Math.round(rSum / count);
+        const avgG = Math.round(gSum / count);
+        const avgB = Math.round(bSum / count);
+        const type = matchColorToType({ r: avgR, g: avgG, b: avgB });
+        if (type && type !== "dark") slotTypes.push(type);
+      }
+    }
+
+    const unique = [];
+    slotTypes.forEach(t => { if (!unique.includes(t)) unique.push(t); });
+    detectedSlots.push(unique.slice(0, 2));
+  }
+
+  const validSlots = detectedSlots.filter(s => s.length > 0);
+  document.getElementById("upload-spinner").classList.remove("show");
+
+  if (validSlots.length === 0) {
+    showToast("No types detected. Try a clearer screenshot.");
+    return;
+  }
+
+  detectedResults = validSlots;
+  const previewList = document.getElementById("detected-list");
+  previewList.innerHTML = validSlots.map((types, i) => {
+    const badges = types.map(t => '<span class="type-badge" style="background:' + (TYPE_COLORS[t] || "#666") + ';color:' + (["electric", "ice", "normal", "fairy"].includes(t) ? "#0a0a1a" : "#fff") + ';font-size:10px;padding:2px 8px">' + t + '</span>').join(" ");
+    return '<div class="detected-row"><span class="slot-num">#' + (i + 1) + '</span><div class="detected-types">' + badges + '</div></div>';
+  }).join("");
+
+  document.getElementById("detected-preview").classList.add("show");
+  showToast("Detected " + validSlots.length + " Pokemon!");
+}
+
+function matchColorToType(color) {
+  let bestMatch = null, bestDist = Infinity;
+  for (const [type, rgb] of Object.entries(TYPE_RGB)) {
+    const dist = Math.sqrt(Math.pow(color.r - rgb[0], 2) + Math.pow(color.g - rgb[1], 2) + Math.pow(color.b - rgb[2], 2));
+    if (dist < bestDist && dist < 75) {
+      bestDist = dist;
+      bestMatch = type;
+    }
+  }
+  return bestMatch;
+}
+
+function applyDetected() {
+  for (let i = 0; i < 6; i++) oppTeam[i] = { name: "", type1: "", type2: "" };
+  detectedResults.forEach((types, idx) => {
+    if (idx < 6) {
+      oppTeam[idx].type1 = types[0] || "";
+      oppTeam[idx].type2 = types[1] || "";
+    }
+  });
+  renderTeam("opp");
+  closeUpload();
+  showToast("Opponent team filled!");
+}
+
+function getMultiplier(attacker, defender) {
+  if (!attacker || !defender) return 1;
+  const chart = TYPE_CHART[attacker];
+  if (!chart) return 1;
+  return chart[defender] !== undefined ? chart[defender] : 1;
+}
+
+function calculateScore(myPoke, oppPoke) {
+  const myTypes = [myPoke.type1, myPoke.type2].filter(t => t);
+  const oppTypes = [oppPoke.type1, oppPoke.type2].filter(t => t);
+  let score = 0, details = [];
+
+  myTypes.forEach(mt => {
+    oppTypes.forEach(ot => {
+      const mult = getMultiplier(mt, ot);
+      if (mult > 1) {
+        score += 1;
+        details.push(mt.slice(0, 3) + "->" + ot.slice(0, 3) + " +1");
+      } else if (mult < 1 && mult > 0) {
+        score -= 1;
+        details.push(mt.slice(0, 3) + "->" + ot.slice(0, 3) + " -1");
+      } else if (mult === 0) {
+        score -= 1;
+        details.push(mt.slice(0, 3) + "->" + ot.slice(0, 3) + " -1");
+      }
+    });
+  });
+  return { score, details };
+}
+
+function calculate() {
+  const validMy = myTeam.filter(p => p.name && p.type1);
+  const validOpp = oppTeam.filter(p => p.type1);
+
+  if (validMy.length === 0 || validOpp.length === 0) {
+    showToast("Fill both teams first!");
+    return;
+  }
+
+  const results = validMy.map(poke => {
+    let totalScore = 0, allDetails = [];
+    validOpp.forEach(opp => {
+      const res = calculateScore(poke, opp);
+      totalScore += res.score;
+      if (res.details.length > 0) {
+        allDetails.push("vs " + (opp.name || "?") + ": " + res.details.join(", "));
+      }
+    });
+    return { poke, score: totalScore, details: allDetails };
+  });
+
+  results.sort((a, b) => b.score - a.score);
+  const pickCount = mode === "singles" ? 3 : 4;
+  const topPicks = results.slice(0, pickCount);
+
+  const picksContainer = document.getElementById("top-picks");
+  picksContainer.innerHTML = "";
+  const colors = ["#ffd700", "#c0c0c0", "#cd7f32", "#4fc3f7"];
+
+  topPicks.forEach((r, i) => {
+    const types = [r.poke.type1, r.poke.type2].filter(t => t).map(t => 
+      '<span class="type-badge" style="background:' + (TYPE_COLORS[t] || "#666") + ';color:' + (["electric", "ice", "normal", "fairy"].includes(t) ? "#0a0a1a" : "#fff") + '">' + t + '</span>'
+    ).join("");
+
+    const div = document.createElement("div");
+    div.className = "result-item";
+    div.style.borderLeftColor = colors[i] || "#4fc3f7";
+    div.innerHTML = 
+      '<div class="result-rank" style="color:' + (colors[i] || "#fff") + '">#' + (i + 1) + '</div>' +
+      '<div class="result-info"><div class="result-name">' + escapeHtml(r.poke.name) + '</div>' +
+      '<div class="result-types">' + types + '</div>' +
+      '<div class="result-detail">' + r.details.slice(0, 1).join(" | ") + '</div></div>' +
+      '<div class="result-score">' + (r.score > 0 ? "+" : "") + r.score + '</div>';
+    picksContainer.appendChild(div);
+  });
+
+  const table = document.getElementById("matchup-table");
+  let thead = "<tr><th style='text-align:left'>Your Pokemon</th>";
+  validOpp.forEach(o => {
+    const oTypes = [o.type1, o.type2].filter(t => t).map(t => 
+      '<span class="type-badge" style="background:' + (TYPE_COLORS[t] || "#666") + ';color:' + (["electric", "ice", "normal", "fairy"].includes(t) ? "#0a0a1a" : "#fff") + ';font-size:9px;padding:2px 5px">' + t.slice(0, 4) + '</span>'
+    ).join(" ");
+    thead += "<th>" + escapeHtml(o.name || "?") + "<br>" + oTypes + "</th>";
+  });
+  thead += "<th>Total</th></tr>";
+
+  let tbody = "";
+  results.forEach(r => {
+    const types = [r.poke.type1, r.poke.type2].filter(t => t).map(t => 
+      '<span class="type-badge" style="background:' + (TYPE_COLORS[t] || "#666") + ';color:' + (["electric", "ice", "normal", "fairy"].includes(t) ? "#0a0a1a" : "#fff") + ';font-size:10px;padding:2px 6px">' + t + '</span>'
+    ).join("");
+
+    tbody += "<tr><td style='text-align:left;font-weight:700'>" + escapeHtml(r.poke.name) + "<div style='margin-top:3px'>" + types + "</div></td>";
+    validOpp.forEach(opp => {
+      const res = calculateScore(r.poke, opp);
+      const cls = res.score > 0 ? "score-positive" : res.score < 0 ? "score-negative" : "score-neutral";
+      tbody += '<td class="' + cls + '">' + (res.score > 0 ? "+" : "") + res.score + '</td>';
+    });
+    const totalCls = r.score > 0 ? "score-positive" : r.score < 0 ? "score-negative" : "score-neutral";
+    tbody += '<td class="' + totalCls + '" style="font-size:15px;font-weight:900">' + (r.score > 0 ? "+" : "") + r.score + '</td></tr>';
+  });
+
+  table.innerHTML = "<thead>" + thead + "</thead><tbody>" + tbody + "</tbody>";
+  document.getElementById("results").classList.add("show");
+  document.getElementById("results").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+init();
+</script>
+</body>
+</html>
